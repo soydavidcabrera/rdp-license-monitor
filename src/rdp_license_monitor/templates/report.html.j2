@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RDS License Report — {{ report.server }}</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f8fafc; color: #1e293b; font-size: 14px; line-height: 1.5;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 16px; }
+
+  /* Header */
+  .header { background: #1e3a5f; color: #fff; border-radius: 10px; padding: 24px 28px; margin-bottom: 24px; }
+  .header h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
+  .header .meta { opacity: .7; font-size: .85rem; }
+
+  /* Summary cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .card {
+    background: #fff; border-radius: 8px; padding: 16px 18px;
+    border-left: 4px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .card .label { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: #64748b; margin-bottom: 4px; }
+  .card .value { font-size: 1.8rem; font-weight: 700; }
+  .card.green  { border-left-color: #22c55e; } .card.green  .value { color: #16a34a; }
+  .card.amber  { border-left-color: #f59e0b; } .card.amber  .value { color: #d97706; }
+  .card.red    { border-left-color: #ef4444; } .card.red    .value { color: #dc2626; }
+  .card.blue   { border-left-color: #3b82f6; } .card.blue   .value { color: #2563eb; }
+
+  /* Tables */
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 1rem; font-weight: 600; margin-bottom: 10px; color: #334155; }
+  .table-wrap { overflow-x: auto; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    background: #f1f5f9; text-align: left; padding: 10px 14px;
+    font-size: .75rem; text-transform: uppercase; letter-spacing: .04em;
+    color: #475569; border-bottom: 1px solid #e2e8f0;
+  }
+  td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8fafc; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* Progress bar */
+  .bar-wrap { background: #e2e8f0; border-radius: 999px; height: 8px; width: 120px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 6px; }
+  .bar-fill { height: 100%; border-radius: 999px; }
+
+  /* Badges */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: .75rem; font-weight: 600;
+  }
+  .badge-green  { background: #dcfce7; color: #15803d; }
+  .badge-amber  { background: #fef3c7; color: #b45309; }
+  .badge-red    { background: #fee2e2; color: #b91c1c; }
+  .badge-gray   { background: #f1f5f9; color: #475569; }
+
+  /* Footer */
+  footer { text-align: center; color: #94a3b8; font-size: .75rem; margin-top: 24px; }
+
+  @media (max-width: 600px) {
+    .header h1 { font-size: 1.1rem; }
+    .card .value { font-size: 1.4rem; }
+    .bar-wrap { width: 70px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>RDS License Report — {{ report.server }}</h1>
+    <div class="meta">Generado: {{ report.collected_at.strftime("%Y-%m-%d %H:%M UTC") }}</div>
+  </div>
+
+  {% set total = report.total_cals %}
+  {% set issued = report.total_issued %}
+  {% set avail = total - issued %}
+  {% set pct = (issued / total * 100) if total else 0 %}
+  {% set card_class = "green" if pct < 80 else ("amber" if pct < 95 else "red") %}
+
+  <div class="cards">
+    <div class="card blue">
+      <div class="label">Total CALs</div>
+      <div class="value">{{ total }}</div>
+    </div>
+    <div class="card {{ card_class }}">
+      <div class="label">Emitidas</div>
+      <div class="value">{{ issued }}</div>
+    </div>
+    <div class="card green">
+      <div class="label">Disponibles</div>
+      <div class="value">{{ avail }}</div>
+    </div>
+    <div class="card {{ card_class }}">
+      <div class="label">Uso</div>
+      <div class="value">{{ "%.1f"|format(pct) }}%</div>
+    </div>
+  </div>
+
+  <section>
+    <h2>Packs de CALs</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Descripción</th>
+            <th>Tipo</th>
+            <th class="num">Total</th>
+            <th class="num">Emitidas</th>
+            <th class="num">Disponibles</th>
+            <th>Uso</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for kp in report.key_packs %}
+          {% set kp_pct = kp.usage_pct %}
+          {% set color = kp_pct | usage_color %}
+          {% set badge = "badge-green" if kp_pct < 80 else ("badge-amber" if kp_pct < 95 else "badge-red") %}
+          <tr>
+            <td>{{ kp.keypack_id }}</td>
+            <td>{{ kp.description }}</td>
+            <td><span class="badge badge-gray">{{ kp.license_type.value }}</span></td>
+            <td class="num">{{ kp.total_licenses }}</td>
+            <td class="num">{{ kp.issued_licenses }}</td>
+            <td class="num">{{ kp.available_licenses }}</td>
+            <td>
+              <span class="bar-wrap">
+                <span class="bar-fill" style="width:{{ [kp_pct, 100]|min }}%;background:{{ color }};"></span>
+              </span>
+              <span style="color:{{ color }};font-weight:600;">{{ "%.1f"|format(kp_pct) }}%</span>
+            </td>
+            <td><span class="badge {{ badge }}">{{ kp.status.value }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" style="color:#94a3b8;text-align:center;">Sin packs instalados</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {% if report.issued_licenses %}
+  <section>
+    <h2>Licencias emitidas</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Usuario / Dispositivo</th>
+            <th>Tipo</th>
+            <th>Emitida</th>
+            <th>Vencimiento</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lic in report.issued_licenses %}
+          <tr>
+            <td>{{ lic.license_id }}</td>
+            <td>{{ lic.user_or_device }}</td>
+            <td><span class="badge badge-gray">{{ lic.license_type.value }}</span></td>
+            <td>{{ lic.issued_at.strftime("%Y-%m-%d") if lic.issued_at else "—" }}</td>
+            <td>{{ lic.expires_at.strftime("%Y-%m-%d") if lic.expires_at else "—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <footer>Generado por rdp-license-monitor v{{ version }} — read-only audit tool</footer>
+
+</div>
+</body>
+</html>

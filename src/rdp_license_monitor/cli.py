@@ -21,7 +21,7 @@ from rdp_license_monitor.core.connection import (
 )
 from rdp_license_monitor.core.models import AuditReport
 from rdp_license_monitor.reporters import console as console_reporter
-from rdp_license_monitor.reporters import csv_exporter
+from rdp_license_monitor.reporters import csv_exporter, html_reporter, json_exporter
 
 app = typer.Typer(help="Auditar licencias RDS en Windows Server.", no_args_is_help=True)
 err_console = Console(stderr=True)
@@ -38,7 +38,9 @@ def audit(
     server: str | None = typer.Option(None, "--server", "-s", help="Servidor objetivo"),
     local: bool = typer.Option(False, "--local", help="Forzar ejecución local"),
     user: str | None = typer.Option(None, "--user", "-u", help="Usuario (DOMINIO\\user)"),
-    csv_out: Path | None = typer.Option(None, "--csv", help="Path para exportar CSV"),
+    csv_out: Path | None = typer.Option(None, "--csv", help="Exportar a CSV"),
+    json_out: Path | None = typer.Option(None, "--json", help="Exportar a JSON"),
+    html_out: Path | None = typer.Option(None, "--html", help="Exportar a HTML"),
 ) -> None:
     """Ejecuta auditoría de licencias RDS en un servidor."""
     if not server and not local:
@@ -67,10 +69,17 @@ def audit(
     )
 
     console_reporter.render(report)
+    console = Console()
 
     if csv_out:
         csv_exporter.export(report, csv_out)
-        Console().print(f"[green]CSV escrito en[/] {csv_out}")
+        console.print(f"[green]CSV →[/] {csv_out}")
+    if json_out:
+        json_exporter.export(report, json_out)
+        console.print(f"[green]JSON →[/] {json_out}")
+    if html_out:
+        html_reporter.export(report, html_out)
+        console.print(f"[green]HTML →[/] {html_out}")
 
 
 @app.command()
@@ -86,7 +95,7 @@ def batch(
 
     console = Console()
     date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
-    results: list[tuple[str, AuditReport | None, str]] = []  # (name, report, error)
+    results: list[tuple[str, AuditReport | None, str]] = []
 
     with Progress(SpinnerColumn(), TextColumn("{task.description}"), console=console) as progress:
         for srv in cfg.servers:
@@ -101,22 +110,23 @@ def batch(
                     key_packs=key_packs,
                     issued_licenses=issued,
                 )
-                out_path = cfg.output.resolve_filename(srv.name, date_str)
-                csv_exporter.export(report, out_path)
+                csv_exporter.export(report, cfg.output.resolve_filename(srv.name, date_str))
+                html_path = cfg.output.resolve_html_filename(srv.name, date_str)
+                if html_path:
+                    html_reporter.export(report, html_path)
                 results.append((srv.name, report, ""))
                 progress.update(task, description=f"[green]✓[/] {srv.name}")
             except Exception as exc:
                 results.append((srv.name, None, str(exc)))
                 progress.update(task, description=f"[red]✗[/] {srv.name}: {exc}")
 
-    _render_batch_summary(console, results, cfg.output.csv_dir, date_str)
+    _render_batch_summary(console, results, cfg.output)
 
 
 def _render_batch_summary(
     console: Console,
     results: list[tuple[str, AuditReport | None, str]],
-    csv_dir: Path,
-    date_str: str,
+    output: object,
 ) -> None:
     console.rule("[bold]Resumen batch")
 
@@ -152,10 +162,7 @@ def _render_batch_summary(
         )
 
     console.print(table)
-    console.print(
-        f"\n[bold]{ok}[/] servidores OK, [bold]{errors}[/] errores. "
-        f"CSVs en [dim]{csv_dir}/{date_str}_*.csv[/]"
-    )
+    console.print(f"\n[bold]{ok}[/] servidores OK, [bold]{errors}[/] errores.")
 
 
 if __name__ == "__main__":

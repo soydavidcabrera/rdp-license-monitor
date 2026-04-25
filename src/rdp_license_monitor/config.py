@@ -16,12 +16,21 @@ class ServerConfig(BaseModel):
 
 class OutputConfig(BaseModel):
     csv_dir: Path = Path("./reports")
+    html_dir: Path | None = None
     filename_pattern: str = "{date}_{server}.csv"
 
+    def _safe_name(self, server_name: str) -> str:
+        return server_name.replace(" ", "_").replace("\\", "_").replace("/", "_")
+
     def resolve_filename(self, server_name: str, date: str) -> Path:
-        safe_name = server_name.replace(" ", "_").replace("\\", "_").replace("/", "_")
-        filename = self.filename_pattern.format(date=date, server=safe_name)
+        filename = self.filename_pattern.format(date=date, server=self._safe_name(server_name))
         return self.csv_dir / filename
+
+    def resolve_html_filename(self, server_name: str, date: str) -> Path | None:
+        if self.html_dir is None:
+            return None
+        filename = f"{date}_{self._safe_name(server_name)}.html"
+        return self.html_dir / filename
 
 
 class BatchConfig(BaseModel):
