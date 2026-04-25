@@ -12,6 +12,7 @@ from rich.table import Table
 
 from rdp_license_monitor.collectors.issued_licenses import collect_issued_licenses
 from rdp_license_monitor.collectors.license_packs import collect_key_packs
+from rdp_license_monitor.collectors.role_check import is_rds_licensing_installed
 from rdp_license_monitor.config import BatchConfig
 from rdp_license_monitor.core.connection import (
     LocalSession,
@@ -53,6 +54,12 @@ def audit(
         target_name = "localhost"
     else:
         session, target_name = _build_session(server, user, use_kerberos=True)
+
+    if not is_rds_licensing_installed(session):
+        err_console.print(
+            "[yellow]warning:[/] RD Licensing role not installed — "
+            "server may be in grace period"
+        )
 
     try:
         key_packs = collect_key_packs(session)

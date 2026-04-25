@@ -2,9 +2,16 @@
 from __future__ import annotations
 
 from rich.console import Console
+from rich.panel import Panel
 from rich.table import Table
 
 from rdp_license_monitor.core.models import AuditReport
+
+_NO_PACKS_MSG = (
+    "No license key packs found.\n"
+    "Server may be in grace period or RD Licensing role is not installed."
+)
+_NO_ISSUED_MSG = "No issued licenses found."
 
 
 def render(report: AuditReport, console: Console | None = None) -> None:
@@ -17,6 +24,10 @@ def render(report: AuditReport, console: Console | None = None) -> None:
         f"Issued: [bold yellow]{report.total_issued}[/]  "
         f"Available: [bold green]{report.total_cals - report.total_issued}[/]"
     )
+
+    if not report.key_packs:
+        console.print(Panel(_NO_PACKS_MSG, title="License Key Packs", border_style="yellow"))
+        return
 
     table = Table(title="License Key Packs", show_lines=True)
     table.add_column("ID", justify="right")
@@ -42,3 +53,6 @@ def render(report: AuditReport, console: Console | None = None) -> None:
         )
 
     console.print(table)
+
+    if not report.issued_licenses:
+        console.print(Panel(_NO_ISSUED_MSG, title="Issued Licenses", border_style="dim"))

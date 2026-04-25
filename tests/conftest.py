@@ -12,6 +12,12 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 @pytest.fixture()
+def wmi_samples() -> dict:
+    path = FIXTURES_DIR / "wmi_samples.json"
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@pytest.fixture()
 def sample_key_packs() -> list[LicenseKeyPack]:
     return [
         LicenseKeyPack(
@@ -37,6 +43,10 @@ def sample_report(sample_key_packs: list[LicenseKeyPack]) -> AuditReport:
 
 
 @pytest.fixture()
-def wmi_samples() -> dict:
-    path = FIXTURES_DIR / "wmi_samples.json"
-    return json.loads(path.read_text(encoding="utf-8"))
+def grace_period_report() -> AuditReport:
+    """Simula un servidor en grace period: sin key packs ni licencias emitidas."""
+    return AuditReport(
+        server="srv-grace.test.local",
+        key_packs=[],
+        issued_licenses=[],
+    )

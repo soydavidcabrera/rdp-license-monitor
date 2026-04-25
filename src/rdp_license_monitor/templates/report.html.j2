@@ -104,6 +104,12 @@
 
   <section>
     <h2>Packs de CALs</h2>
+    {% if not report.key_packs %}
+    <div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:16px 20px;color:#92400e;">
+      <strong>No license key packs found.</strong><br>
+      Server may be in grace period or the RD Licensing role is not installed.
+    </div>
+    {% else %}
     <div class="table-wrap">
       <table>
         <thead>
@@ -138,12 +144,11 @@
             </td>
             <td><span class="badge {{ badge }}">{{ kp.status.value }}</span></td>
           </tr>
-          {% else %}
-          <tr><td colspan="8" style="color:#94a3b8;text-align:center;">Sin packs instalados</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+    {% endif %}
   </section>
 
   {% if report.issued_licenses %}

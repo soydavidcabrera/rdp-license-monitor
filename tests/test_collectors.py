@@ -16,10 +16,10 @@ class MockSession:
         return self._response
 
 
-# --- license_packs ---
+# --- license_packs (active server) ---
 
 def test_collect_key_packs_list(wmi_samples):
-    payload = json.dumps(wmi_samples["key_packs"])
+    payload = json.dumps(wmi_samples["active_server"]["key_packs"])
     packs = collect_key_packs(MockSession(payload))
     assert len(packs) == 3
     assert packs[0].license_type == LicenseType.PER_USER
@@ -27,7 +27,7 @@ def test_collect_key_packs_list(wmi_samples):
 
 
 def test_collect_key_packs_single_object(wmi_samples):
-    payload = json.dumps(wmi_samples["key_packs"][0])
+    payload = json.dumps(wmi_samples["active_server"]["key_packs"][0])
     packs = collect_key_packs(MockSession(payload))
     assert len(packs) == 1
 
@@ -38,46 +38,54 @@ def test_collect_key_packs_empty():
 
 
 def test_key_pack_status_active(wmi_samples):
-    payload = json.dumps(wmi_samples["key_packs"][0])  # KeyPackStatus=0
+    payload = json.dumps(wmi_samples["active_server"]["key_packs"][0])  # KeyPackStatus=0
     packs = collect_key_packs(MockSession(payload))
     assert packs[0].status == KeyPackStatus.ACTIVE
 
 
 def test_key_pack_status_expired(wmi_samples):
-    payload = json.dumps(wmi_samples["key_packs"][1])  # KeyPackStatus=1
+    payload = json.dumps(wmi_samples["active_server"]["key_packs"][1])  # KeyPackStatus=1
     packs = collect_key_packs(MockSession(payload))
     assert packs[0].status == KeyPackStatus.EXPIRED
 
 
 def test_key_pack_status_revoked(wmi_samples):
-    payload = json.dumps(wmi_samples["key_packs"][2])  # KeyPackStatus=2
+    payload = json.dumps(wmi_samples["active_server"]["key_packs"][2])  # KeyPackStatus=2
     packs = collect_key_packs(MockSession(payload))
     assert packs[0].status == KeyPackStatus.REVOKED
 
 
 def test_key_pack_type_unknown_for_unmapped(wmi_samples):
-    payload = json.dumps(wmi_samples["key_packs"][2])  # KeyPackType=99
+    payload = json.dumps(wmi_samples["active_server"]["key_packs"][2])  # KeyPackType=99
     packs = collect_key_packs(MockSession(payload))
     assert packs[0].license_type == LicenseType.UNKNOWN
+
+
+# --- license_packs (grace period) ---
+
+def test_collect_key_packs_grace_period(wmi_samples):
+    payload = json.dumps(wmi_samples["grace_period"]["key_packs"])
+    packs = collect_key_packs(MockSession(payload))
+    assert packs == []
 
 
 # --- issued_licenses ---
 
 def test_collect_issued_licenses_list(wmi_samples):
-    payload = json.dumps(wmi_samples["issued_licenses"])
+    payload = json.dumps(wmi_samples["active_server"]["issued_licenses"])
     licenses = collect_issued_licenses(MockSession(payload))
     assert len(licenses) == 2
 
 
 def test_issued_license_per_user(wmi_samples):
-    payload = json.dumps(wmi_samples["issued_licenses"][0])  # LicenseStatus=1
+    payload = json.dumps(wmi_samples["active_server"]["issued_licenses"][0])  # LicenseStatus=1
     licenses = collect_issued_licenses(MockSession(payload))
     assert licenses[0].license_type == LicenseType.PER_USER
     assert licenses[0].user_or_device == "DOMAIN\\jdoe"
 
 
 def test_issued_license_per_device(wmi_samples):
-    payload = json.dumps(wmi_samples["issued_licenses"][1])  # LicenseStatus=4
+    payload = json.dumps(wmi_samples["active_server"]["issued_licenses"][1])  # LicenseStatus=4
     licenses = collect_issued_licenses(MockSession(payload))
     assert licenses[0].license_type == LicenseType.PER_DEVICE
     assert licenses[0].user_or_device == "WKST-01"
@@ -85,4 +93,10 @@ def test_issued_license_per_device(wmi_samples):
 
 def test_collect_issued_licenses_empty():
     licenses = collect_issued_licenses(MockSession(""))
+    assert licenses == []
+
+
+def test_collect_issued_licenses_grace_period(wmi_samples):
+    payload = json.dumps(wmi_samples["grace_period"]["issued_licenses"])
+    licenses = collect_issued_licenses(MockSession(payload))
     assert licenses == []
