@@ -1,0 +1,26 @@
+{
+  "key_packs": [
+    {
+      "KeyPackId": 1,
+      "Description": "Windows Server 2022 - RDS Per User CAL",
+      "ProductVersion": "Windows Server 2022",
+      "TypeAndModel": "Per User",
+      "TotalLicenses": 50,
+      "AvailableLicenses": 20,
+      "IssuedLicenses": 30,
+      "KeyPackType": 4,
+      "ExpirationDate": null
+    },
+    {
+      "KeyPackId": 2,
+      "Description": "Windows Server 2019 - RDS Per Device CAL",
+      "ProductVersion": "Windows Server 2019",
+      "TypeAndModel": "Per Device",
+      "TotalLicenses": 25,
+      "AvailableLicenses": 10,
+      "IssuedLicenses": 15,
+      "KeyPackType": 2,
+      "ExpirationDate": null
+    }
+  ]
+}
