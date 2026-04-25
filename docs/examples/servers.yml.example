@@ -1,0 +1,17 @@
+servers:
+  - name: "Cliente A - RDS01"
+    host: srv-rds01.clientea.local
+    user: CLIENTEA\svc_monitor   # opcional; omitir para usar credenciales actuales
+    use_kerberos: true
+
+  - name: "Cliente B - RDS01"
+    host: 192.168.10.5
+    use_kerberos: false           # NTLM; user/password se pedirán interactivamente
+
+  - name: "Oficina Central"
+    host: rdslicense.corp.local
+    use_kerberos: true
+
+output:
+  csv_dir: ./reports
+  filename_pattern: "{date}_{server}.csv"

@@ -27,6 +27,7 @@ dependencies = [
   "rich>=13.7",
   "pydantic>=2.6",
   "pypsrp>=0.8",
+  "pyyaml>=6.0",
   "pywin32>=306; sys_platform == 'win32'",
 ]
 
