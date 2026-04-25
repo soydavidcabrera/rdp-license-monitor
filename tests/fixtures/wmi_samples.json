@@ -9,6 +9,7 @@
       "AvailableLicenses": 20,
       "IssuedLicenses": 30,
       "KeyPackType": 4,
+      "KeyPackStatus": 0,
       "ExpirationDate": null
     },
     {
@@ -20,7 +21,42 @@
       "AvailableLicenses": 10,
       "IssuedLicenses": 15,
       "KeyPackType": 2,
+      "KeyPackStatus": 1,
       "ExpirationDate": null
+    },
+    {
+      "KeyPackId": 3,
+      "Description": "Windows Server 2019 - RDS Per Device CAL (Revoked)",
+      "ProductVersion": "Windows Server 2019",
+      "TypeAndModel": "Per Device",
+      "TotalLicenses": 10,
+      "AvailableLicenses": 10,
+      "IssuedLicenses": 0,
+      "KeyPackType": 99,
+      "KeyPackStatus": 2,
+      "ExpirationDate": null
+    }
+  ],
+  "issued_licenses": [
+    {
+      "LicenseId": 101,
+      "KeyPackId": 1,
+      "sHardwareId": "S-1-5-21-1234567890-1",
+      "IssuedToUser": "DOMAIN\\jdoe",
+      "IssuedToComputer": null,
+      "IssueDate": "2024-01-15T10:00:00Z",
+      "ExpirationDate": "2025-01-15T10:00:00Z",
+      "LicenseStatus": 1
+    },
+    {
+      "LicenseId": 102,
+      "KeyPackId": 2,
+      "sHardwareId": "S-1-5-21-1234567890-2",
+      "IssuedToUser": null,
+      "IssuedToComputer": "WKST-01",
+      "IssueDate": "2024-02-01T08:00:00Z",
+      "ExpirationDate": null,
+      "LicenseStatus": 4
     }
   ]
 }

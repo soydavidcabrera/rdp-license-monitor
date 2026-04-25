@@ -8,9 +8,11 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest, windows-latest]
         python-version: ["3.11", "3.12"]
 
     steps:
@@ -34,8 +36,26 @@ jobs:
       - name: Security scan
         run: bandit -r src -c pyproject.toml
 
+      - name: Tests
+        run: pytest --cov=src --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-py${{ matrix.python-version }}
+          path: coverage.xml
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv pip install -e ".[dev]" --system
+
       - name: Audit dependencies
         run: pip-audit
-
-      - name: Tests
-        run: pytest --cov=rdp_license_monitor --cov-report=term-missing

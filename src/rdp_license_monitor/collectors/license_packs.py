@@ -14,15 +14,24 @@ PS_QUERY = """
 Get-CimInstance -ClassName Win32_TSLicenseKeyPack |
   Select-Object KeyPackId, Description, ProductVersion, TypeAndModel,
                 TotalLicenses, AvailableLicenses, IssuedLicenses,
-                KeyPackType, ExpirationDate |
+                KeyPackType, KeyPackStatus, ExpirationDate |
   ConvertTo-Json -Compress -Depth 3
 """
 
-# Valores de KeyPackType según docs WMI de Microsoft:
-# 0=Unknown, 1=Retail, 2=Volume, 3=Concurrent, 4=Temporary, 5=OpenLicense, 6=BuiltIn
-_TYPE_MAP = {
+# KeyPackType values per WMI docs:
+# 0=Unknown, 1=Retail (Per Device), 2=Volume (Per Device), 4=Concurrent (Per User),
+# 5=Temporary, 6=Open License, 7=Built-in
+_TYPE_MAP: dict[int, LicenseType] = {
+    1: LicenseType.PER_DEVICE,
     2: LicenseType.PER_DEVICE,
     4: LicenseType.PER_USER,
+}
+
+# KeyPackStatus values per WMI docs: 0=Active, 1=Expired, 2=Revoked, 3=Unknown
+_STATUS_MAP: dict[int, KeyPackStatus] = {
+    0: KeyPackStatus.ACTIVE,
+    1: KeyPackStatus.EXPIRED,
+    2: KeyPackStatus.REVOKED,
 }
 
 
@@ -38,6 +47,7 @@ def collect_key_packs(session: Session) -> list[LicenseKeyPack]:
     packs: list[LicenseKeyPack] = []
     for item in data:
         kp_type = item.get("KeyPackType", 0)
+        kp_status = item.get("KeyPackStatus", 3)
         packs.append(
             LicenseKeyPack(
                 keypack_id=item["KeyPackId"],
@@ -47,7 +57,7 @@ def collect_key_packs(session: Session) -> list[LicenseKeyPack]:
                 total_licenses=item.get("TotalLicenses", 0),
                 available_licenses=item.get("AvailableLicenses", 0),
                 issued_licenses=item.get("IssuedLicenses", 0),
-                status=KeyPackStatus.ACTIVE,  # refinar con KeyPackStatus real en v0.2
+                status=_STATUS_MAP.get(kp_status, KeyPackStatus.OTHER),
                 expiration_date=None,
             )
         )

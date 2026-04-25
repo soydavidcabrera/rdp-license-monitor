@@ -8,6 +8,7 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
+from rdp_license_monitor.collectors.issued_licenses import collect_issued_licenses
 from rdp_license_monitor.collectors.license_packs import collect_key_packs
 from rdp_license_monitor.core.connection import (
     LocalSession,
@@ -47,6 +48,7 @@ def audit(
 
     try:
         key_packs = collect_key_packs(session)
+        issued_licenses = collect_issued_licenses(session)
     except Exception as exc:
         err_console.print(f"[red]error:[/] {exc}")
         raise typer.Exit(1) from exc
@@ -55,7 +57,7 @@ def audit(
         server=target_name,
         collected_at=datetime.now(timezone.utc),
         key_packs=key_packs,
-        issued_licenses=[],
+        issued_licenses=issued_licenses,
     )
 
     console_reporter.render(report)
